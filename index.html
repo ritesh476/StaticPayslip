@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AVFx Payslip Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'"></script>
+  <style>
+    :root { --ink:#172033; --muted:#647084; --line:#dce4ee; --blue:#246bfe; --coral:#f34b48; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; color:var(--ink); background:#f7f9fc; font:12px/1.45 "Trebuchet MS",Arial,sans-serif; }
+    .page { max-width:980px; margin:0 auto; padding:22px; }
+    .paper { background:#fff; border:1px solid #e5eaf1; border-radius:5px; box-shadow:0 5px 18px rgba(27,47,80,.08); padding:25px 28px 30px; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:112px; height:54px; object-fit:contain; object-position:left center; }
+    .brand-copy { width:180px; }
+    .brand-copy strong { display:block; font-size:12px; }
+    .brand-copy small { color:#536071; font-size:8px; }
+    .period { text-align:right; }
+    .period strong { display:block; font-size:13px; }
+    .period span { font-size:14px; font-weight:700; }
+    .company { width:66%; margin-top:15px; }
+    .company-name { border:1px solid var(--blue); padding:4px 6px; font-size:14px; }
+    .company-address { margin-top:4px; color:#475467; font-size:10px; line-height:1.55; }
+    input { width:100%; border:0; border-bottom:1px dashed #d6e0ef; padding:4px 1px; outline:0; color:var(--ink); background:transparent; font:inherit; }
+    input:focus { border-bottom-color:var(--blue); }
+    .section-title { margin:28px 0 12px; font-weight:700; font-size:12px; }
+    .details-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px 44px; }
+    .field { display:grid; grid-template-columns:75px 1fr; align-items:center; gap:8px; }
+    .field label { font-size:10px; }
+    .field input { font-size:10px; }
+    .tables { display:grid; grid-template-columns:1fr 1fr; border:1px solid #edf0f5; box-shadow:0 3px 10px rgba(27,47,80,.06); }
+    .table-wrap + .table-wrap { border-left:1px solid #edf0f5; }
+    table { width:100%; border-collapse:collapse; table-layout:fixed; }
+    th,td { padding:7px 10px; border-bottom:1px solid #eef1f5; text-align:left; font-size:10px; }
+    th:last-child,td:last-child { text-align:right; width:30%; }
+    th { font-size:9px; color:#303b4b; }
+    td input { font-size:10px; border-bottom:0; padding:0; }
+    .row-add td { color:var(--blue); cursor:pointer; border-bottom:0; }
+    .total-row td { background:#fafafa; font-weight:700; border-bottom:0; padding:9px 10px; }
+    .summary { width:76%; margin:20px 0 0; border:1px solid #e5eaf1; display:grid; grid-template-columns:1fr 95px; }
+    .summary > div { padding:10px; }
+    .summary > div:last-child { border-left:1px solid #e5eaf1; text-align:right; font-weight:700; display:grid; place-items:center end; }
+    .summary strong { display:block; font-size:11px; }
+    .summary small { color:var(--muted); font-size:9px; }
+    .words { margin:5px 0 0; text-align:right; font-size:9px; min-height:23px; border-bottom:1px solid #e2e6ec; }
+    .actions { display:flex; justify-content:center; gap:14px; margin-top:39px; }
+    button { font:700 11px inherit; padding:8px 18px; border-radius:4px; cursor:pointer; }
+    .primary { color:#fff; background:var(--coral); border:1px solid var(--coral); }
+    .secondary { color:var(--ink); background:#fff; border:1px solid var(--ink); }
+    .status { color:var(--muted); text-align:center; min-height:17px; margin-top:9px; font-size:10px; }
+    @media (max-width:640px) { .page{padding:8px}.paper{padding:16px 12px 22px}.company{width:100%}.details-grid,.tables{grid-template-columns:1fr}.table-wrap+.table-wrap{border-left:0;border-top:1px solid #edf0f5}.summary{width:100%}.brand-copy{width:130px}.logo{width:90px} }
+    @media print { body{background:#fff}.page{padding:0}.paper{border:0;box-shadow:none}.actions,.status,.row-add{display:none!important} input{border-bottom:0} }
+    .pdf-mode .actions, .pdf-mode .status, .pdf-mode .row-add { display:none!important; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="paper" id="payslip" aria-label="Payslip form">
+      <header class="topbar">
+        <div class="brand">
+          <img class="logo" src="AVFx%20Red%20Black%20Logo%20B%20(3).png" crossorigin="anonymous" alt="AVFx Solutions logo">
+          <div class="brand-copy"><strong>AVFx Solutions Pvt Ltd</strong><small>Official Salary Payslip</small></div>
+        </div>
+        <div class="period">Payslip For the Month<strong id="monthPreview">September 2026</strong></div>
+      </header>
+
+      <div class="company">
+        <div class="company-name">AVFx Solutions Pvt Ltd</div>
+        <div class="company-address">Metro Pillar No 146, 16, GF, Kanakapura Main Rd, near Madhu's garage,<br>Venkatareddy Layout, Doddakal Bangalore-560062 India</div>
+      </div>
+
+      <h3 class="section-title">Employee Pay Summary *</h3>
+      <div class="details-grid">
+        <div class="field"><label>Employee Name</label><input id="employeeName" placeholder="Eg: Meera Krishnan"></div>
+        <div class="field"><label>Employee ID</label><input id="employeeId" placeholder="Eg: 1234"></div>
+        <div class="field"><label>Pay Period</label><input id="payPeriod" type="month" value="2026-09"></div>
+        <div class="field"><label>Paid Days</label><input id="paidDays" type="number" min="0" placeholder="Eg: 22"></div>
+        <div class="field"><label>Loss of Pay Days</label><input id="lossDays" type="number" min="0" value="0"></div>
+        <div class="field"><label>Pay Date</label><input id="payDate" type="date" value="2026-09-01"></div>
+      </div>
+
+      <h3 class="section-title">Income Details *</h3>
+      <div class="tables">
+        <div class="table-wrap"><table><thead><tr><th>Earnings</th><th>Amount</th></tr></thead><tbody id="earningsBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Deductions</th><th>Amount</th></tr></thead><tbody id="deductionsBody"></tbody></table></div>
+      </div>
+
+      <div class="summary"><div><strong>Total Net Payable</strong><small>Gross Earnings - Total Deductions</small></div><div id="netPay">₹0</div></div>
+      <div class="words">Amount in words: <span id="amountWords"></span></div>
+      <div class="actions"><button class="primary" id="generate" type="button">Generate Payslip</button><button class="secondary" id="reset" type="button">Reset</button></div>
+      <div class="status" id="status" role="status"></div>
+    </section>
+  </main>
+  <script>
+    const defaults = { earnings:[['Basic',0],['House Rent Allowance',0],['Gross Earnings',0]], deductions:[['Income Tax',0],['Provident Fund',0],['Total Deductions',0]] };
+    const state = { earnings:defaults.earnings.map(row=>[...row]), deductions:defaults.deductions.map(row=>[...row]) };
+    const money = value => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+    const parseAmount = value => Number(String(value).replace(/[^0-9.-]/g,'')) || 0;
+    const formatMonth = value => { const date=new Date(`${value}-01T00:00:00`); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US',{month:'long',year:'numeric'}); };
+    function renderRows(type) {
+      const body=document.getElementById(`${type}Body`);
+      body.innerHTML=state[type].map((row,index)=>{ const total=index===state[type].length-1; return `<tr class="${total?'total-row':''}"><td><input data-type="${type}" data-index="${index}" data-key="label" value="${row[0]}" ${total?'readonly':''}></td><td><input data-type="${type}" data-index="${index}" data-key="amount" value="${money(row[1])}" inputmode="decimal" ${total?'readonly':''}></td></tr>`; }).join('')+`<tr class="row-add" data-add="${type}"><td colspan="2">+ Add ${type==='earnings'?'Earnings':'Deductions'}</td></tr>`;
+      bindRows();
+    }
+    function refreshTotals() {
+      const gross=state.earnings.slice(0,-1).reduce((sum,row)=>sum+row[1],0); const deductions=state.deductions.slice(0,-1).reduce((sum,row)=>sum+row[1],0);
+      state.earnings.at(-1)[1]=gross; state.deductions.at(-1)[1]=deductions; document.getElementById('netPay').textContent=money(gross-deductions); document.getElementById('amountWords').textContent=gross-deductions?`${Math.round(gross-deductions).toLocaleString('en-IN')} rupees only`:''; renderRows('earnings'); renderRows('deductions');
+    }
+    function bindRows() {
+      document.querySelectorAll('tbody input').forEach(input=>input.addEventListener('change',event=>{ const el=event.target; const row=state[el.dataset.type][el.dataset.index]; row[el.dataset.key==='amount'?1:0]=el.dataset.key==='amount'?parseAmount(el.value):el.value; refreshTotals(); }));
+      document.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>{ state[button.dataset.add].splice(-1,0,['New item',0]); refreshTotals(); }));
+    }
+    document.getElementById('payPeriod').addEventListener('input',event=>document.getElementById('monthPreview').textContent=formatMonth(event.target.value));
+    document.getElementById('reset').addEventListener('click',()=>{ document.querySelectorAll('input').forEach(input=>{ if(input.id==='payPeriod')input.value='2026-09'; else if(input.id==='payDate')input.value='2026-09-01'; else input.value=input.id==='lossDays'?'0':''; }); state.earnings=defaults.earnings.map(row=>[...row]); state.deductions=defaults.deductions.map(row=>[...row]); refreshTotals(); document.getElementById('status').textContent=''; });
+    document.getElementById('generate').addEventListener('click',async()=>{ const button=document.getElementById('generate'); const payslip=document.getElementById('payslip'); button.disabled=true; payslip.classList.add('pdf-mode'); document.getElementById('status').textContent='Preparing PDF...'; try { if(typeof html2pdf!=='function') throw new Error('PDF library did not load'); await html2pdf().set({margin:8,filename:`payslip-${document.getElementById('employeeId').value||'employee'}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(payslip).save(); document.getElementById('status').textContent='PDF downloaded successfully. Check your Downloads folder.'; } catch(error) { console.error(error); document.getElementById('status').textContent=error.message==='PDF library did not load'?'PDF service unavailable. Please connect to the internet and try again.':'PDF download failed. Please open the page from GitHub Pages and try again.'; } finally { payslip.classList.remove('pdf-mode'); button.disabled=false; } });
+    refreshTotals();
+  </script>
+</body>
+</html>
