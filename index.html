@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- hello -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +10,7 @@
     * { box-sizing:border-box; }
     body { margin:0; min-width:320px; color:var(--ink); background:#f7f9fc; font:12px/1.45 "Trebuchet MS",Arial,sans-serif; }
     .page { max-width:850px; margin:0 auto; padding:20px; }
-    .paper { background:#fff; border:1px solid #e5eaf1; border-radius:5px; box-shadow:0 5px 18px rgba(27,47,80,.08); padding:25px 40px 25px 10px; margin:0 auto; width:100%; }
+    .paper { background:#fff; border:1px solid #e5eaf1; border-radius:5px; box-shadow:0 5px 18px rgba(27,47,80,.08); padding:25px; margin:0 auto; width:100%; }
     .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
     .brand { display:flex; gap:12px; align-items:center; }
     .logo { width:112px; height:54px; object-fit:contain; object-position:left center; }
@@ -31,7 +30,8 @@
     /* PDF Print Styles */
     .print-val { display:none; padding:4px 1px; font-size:10px; font-weight:500; }
     
-    .pdf-mode { width:700px !important; max-width:700px !important; margin:0 auto !important; padding:20px 28px !important; }
+    /* Perfect A4 layout container for html2canvas */
+    .pdf-mode { width:794px !important; max-width:794px !important; margin:0 auto !important; padding:30px !important; box-shadow:none !important; border:0 !important; }
     .pdf-mode input { display:none !important; }
     .pdf-mode .print-val { display:block !important; }
     .pdf-mode .actions, .pdf-mode .status, .pdf-mode .row-add, .pdf-mode .row-delete { display:none !important; }
@@ -239,7 +239,6 @@
       document.getElementById('status').textContent = ''; 
     });
 
-    // Safe Base64 helper with fail-safe error handling
     function getLogoBase64(img) {
       return new Promise((resolve) => {
         if (!img || !img.complete || img.naturalWidth === 0) {
@@ -254,7 +253,6 @@
           ctx.drawImage(img, 0, 0);
           resolve(canvas.toDataURL('image/png'));
         } catch (e) {
-          // If tainted canvas security policy hits, fall back gracefully
           resolve(null);
         }
       });
@@ -296,8 +294,9 @@
         
         const empId = document.getElementById('employeeId').value || 'employee';
 
+        // Precision configuration for A4 centering and fit
         const opt = {
-          margin: [8, 8, 8, 8],
+          margin: [5, 5, 5, 5],
           filename: `payslip-${empId}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { 
@@ -305,7 +304,8 @@
             useCORS: true, 
             allowTaint: true,
             scrollX: 0,
-            scrollY: 0
+            scrollY: 0,
+            windowWidth: 794 // Ensures html2canvas renders exact desktop viewport width
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
@@ -315,7 +315,6 @@
       } catch (error) { 
         console.error('PDF Generation Error:', error); 
         document.getElementById('status').textContent = 'PDF download failed. Trying fallback print...';
-        // Fallback execution if canvas generation fails
         window.print();
       } finally { 
         if (img && originalSrc) {
