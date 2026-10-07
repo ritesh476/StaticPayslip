@@ -34,10 +34,14 @@
     .table-wrap + .table-wrap { border-left:1px solid #edf0f5; }
     table { width:100%; border-collapse:collapse; table-layout:fixed; }
     th,td { padding:7px 10px; border-bottom:1px solid #eef1f5; text-align:left; font-size:10px; }
-    th:last-child,td:last-child { text-align:right; width:30%; }
+    th:first-child,td:first-child { width:58%; }
+    th:nth-child(2),td:nth-child(2) { text-align:right; width:30%; }
+    th:last-child,td:last-child { text-align:center; width:12%; }
     th { font-size:9px; color:#303b4b; }
     td input { font-size:10px; border-bottom:0; padding:0; }
     .row-add td { color:var(--blue); cursor:pointer; border-bottom:0; }
+    .row-add button { padding:0; border:0; background:transparent; color:var(--blue); font:inherit; cursor:pointer; }
+    .row-delete { padding:0 4px; border:0; background:transparent; color:var(--coral); font-size:14px; line-height:1; }
     .total-row td { background:#fafafa; font-weight:700; border-bottom:0; padding:9px 10px; }
     .summary { width:76%; margin:20px 0 0; border:1px solid #e5eaf1; display:grid; grid-template-columns:1fr 95px; }
     .summary > div { padding:10px; }
@@ -51,8 +55,8 @@
     .secondary { color:var(--ink); background:#fff; border:1px solid var(--ink); }
     .status { color:var(--muted); text-align:center; min-height:17px; margin-top:9px; font-size:10px; }
     @media (max-width:640px) { .page{padding:8px}.paper{padding:16px 12px 22px}.company{width:100%}.details-grid,.tables{grid-template-columns:1fr}.table-wrap+.table-wrap{border-left:0;border-top:1px solid #edf0f5}.summary{width:100%}.brand-copy{width:130px}.logo{width:90px} }
-    @media print { body{background:#fff}.page{padding:0}.paper{border:0;box-shadow:none}.actions,.status,.row-add{display:none!important} input{border-bottom:0} }
-    .pdf-mode .actions, .pdf-mode .status, .pdf-mode .row-add { display:none!important; }
+    @media print { body{background:#fff}.page{padding:0}.paper{border:0;box-shadow:none}.actions,.status,.row-add,.row-delete{display:none!important} input{border-bottom:0} }
+    .pdf-mode .actions, .pdf-mode .status, .pdf-mode .row-add, .pdf-mode .row-delete { display:none!important; }
   </style>
 </head>
 <body>
@@ -83,8 +87,8 @@
 
       <h3 class="section-title">Income Details *</h3>
       <div class="tables">
-        <div class="table-wrap"><table><thead><tr><th>Earnings</th><th>Amount</th></tr></thead><tbody id="earningsBody"></tbody></table></div>
-        <div class="table-wrap"><table><thead><tr><th>Deductions</th><th>Amount</th></tr></thead><tbody id="deductionsBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Earnings</th><th>Amount</th><th></th></tr></thead><tbody id="earningsBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Deductions</th><th>Amount</th><th></th></tr></thead><tbody id="deductionsBody"></tbody></table></div>
       </div>
 
       <div class="summary"><div><strong>Total Net Payable</strong><small>Gross Earnings - Total Deductions</small></div><div id="netPay">₹0</div></div>
@@ -101,17 +105,40 @@
     const formatMonth = value => { const date=new Date(`${value}-01T00:00:00`); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US',{month:'long',year:'numeric'}); };
     function renderRows(type) {
       const body=document.getElementById(`${type}Body`);
-      body.innerHTML=state[type].map((row,index)=>{ const total=index===state[type].length-1; return `<tr class="${total?'total-row':''}"><td><input data-type="${type}" data-index="${index}" data-key="label" value="${row[0]}" ${total?'readonly':''}></td><td><input data-type="${type}" data-index="${index}" data-key="amount" value="${money(row[1])}" inputmode="decimal" ${total?'readonly':''}></td></tr>`; }).join('')+`<tr class="row-add" data-add="${type}"><td colspan="2">+ Add ${type==='earnings'?'Earnings':'Deductions'}</td></tr>`;
-      bindRows();
+      body.innerHTML=state[type].map((row,index)=>{
+        const total=index===state[type].length-1;
+        const deleteButton=total?'':`<button class="row-delete" type="button" data-delete="${type}" data-index="${index}" aria-label="Delete ${type} row">&times;</button>`;
+        return `<tr class="${total?'total-row':''}"><td><input data-type="${type}" data-index="${index}" data-key="label" value="${row[0]}" ${total?'readonly':''}></td><td><input data-type="${type}" data-index="${index}" data-key="amount" value="${money(row[1])}" inputmode="decimal" ${total?'readonly':''}></td><td>${deleteButton}</td></tr>`;
+      }).join('')+`<tr class="row-add"><td colspan="3"><button type="button" data-add="${type}">+ Add ${type==='earnings'?'Earnings':'Deductions'}</button></td></tr>`;
     }
     function refreshTotals() {
       const gross=state.earnings.slice(0,-1).reduce((sum,row)=>sum+row[1],0); const deductions=state.deductions.slice(0,-1).reduce((sum,row)=>sum+row[1],0);
       state.earnings.at(-1)[1]=gross; state.deductions.at(-1)[1]=deductions; document.getElementById('netPay').textContent=money(gross-deductions); document.getElementById('amountWords').textContent=gross-deductions?`${Math.round(gross-deductions).toLocaleString('en-IN')} rupees only`:''; renderRows('earnings'); renderRows('deductions');
     }
-    function bindRows() {
-      document.querySelectorAll('tbody input').forEach(input=>input.addEventListener('change',event=>{ const el=event.target; const row=state[el.dataset.type][el.dataset.index]; row[el.dataset.key==='amount'?1:0]=el.dataset.key==='amount'?parseAmount(el.value):el.value; refreshTotals(); }));
-      document.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>{ state[button.dataset.add].splice(-1,0,['New item',0]); refreshTotals(); }));
-    }
+    document.querySelector('.tables').addEventListener('click',event=>{
+      const button=event.target.closest('button');
+      if(!button) return;
+      const type=button.dataset.add||button.dataset.delete;
+      if(type!=='earnings'&&type!=='deductions') return;
+      if(button.dataset.add){
+        state[type].splice(-1,0,['New item',0]);
+      } else {
+        const index=Number(button.dataset.index);
+        if(!Number.isInteger(index)||index<0||index>=state[type].length-1) return;
+        state[type].splice(index,1);
+      }
+      refreshTotals();
+    });
+    document.querySelector('.tables').addEventListener('change',event=>{
+      const input=event.target;
+      if(!(input instanceof HTMLInputElement)||!input.dataset.type) return;
+      const type=input.dataset.type;
+      if(type!=='earnings'&&type!=='deductions') return;
+      const row=state[type][input.dataset.index];
+      if(!row) return;
+      row[input.dataset.key==='amount'?1:0]=input.dataset.key==='amount'?parseAmount(input.value):input.value;
+      refreshTotals();
+    });
     document.getElementById('payPeriod').addEventListener('input',event=>document.getElementById('monthPreview').textContent=formatMonth(event.target.value));
     document.getElementById('reset').addEventListener('click',()=>{ document.querySelectorAll('input').forEach(input=>{ if(input.id==='payPeriod')input.value='2026-09'; else if(input.id==='payDate')input.value='2026-09-01'; else input.value=input.id==='lossDays'?'0':''; }); state.earnings=defaults.earnings.map(row=>[...row]); state.deductions=defaults.deductions.map(row=>[...row]); refreshTotals(); document.getElementById('status').textContent=''; });
     document.getElementById('generate').addEventListener('click',async()=>{ const button=document.getElementById('generate'); const payslip=document.getElementById('payslip'); button.disabled=true; payslip.classList.add('pdf-mode'); document.getElementById('status').textContent='Preparing PDF...'; try { if(typeof html2pdf!=='function') throw new Error('PDF library did not load'); await html2pdf().set({margin:8,filename:`payslip-${document.getElementById('employeeId').value||'employee'}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(payslip).save(); document.getElementById('status').textContent='PDF downloaded successfully. Check your Downloads folder.'; } catch(error) { console.error(error); document.getElementById('status').textContent=error.message==='PDF library did not load'?'PDF service unavailable. Please connect to the internet and try again.':'PDF download failed. Please open the page from GitHub Pages and try again.'; } finally { payslip.classList.remove('pdf-mode'); button.disabled=false; } });
