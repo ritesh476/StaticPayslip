@@ -60,10 +60,6 @@
     .pdf-mode .summary { display:flex; break-inside:avoid; page-break-inside:avoid; }
     .pdf-mode .summary > div:first-child { flex:1; }
     .pdf-mode .summary > div:last-child { display:flex; flex:0 0 95px; align-items:center; justify-content:flex-end; }
-    .pdf-mode .paper { padding-top:14px; padding-bottom:16px; }
-    .pdf-mode .company { margin-top:8px; }
-    .pdf-mode .section-title { margin:16px 0 8px; }
-    .pdf-mode .summary { margin-top:12px; }
   </style>
 </head>
 <body>
@@ -148,7 +144,7 @@
     });
     document.getElementById('payPeriod').addEventListener('input',event=>document.getElementById('monthPreview').textContent=formatMonth(event.target.value));
     document.getElementById('reset').addEventListener('click',()=>{ document.querySelectorAll('input').forEach(input=>{ if(input.id==='payPeriod')input.value='2026-09'; else if(input.id==='payDate')input.value='2026-09-01'; else input.value=input.id==='lossDays'?'0':''; }); state.earnings=defaults.earnings.map(row=>[...row]); state.deductions=defaults.deductions.map(row=>[...row]); refreshTotals(); document.getElementById('status').textContent=''; });
-    document.getElementById('generate').addEventListener('click',async()=>{ const button=document.getElementById('generate'); const payslip=document.getElementById('payslip'); button.disabled=true; payslip.classList.add('pdf-mode'); document.getElementById('status').textContent='Preparing PDF...'; try { if(typeof html2pdf!=='function') throw new Error('PDF library did not load'); await html2pdf().set({margin:5,filename:`payslip-${document.getElementById('employeeId').value||'employee'}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:false},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},pagebreak:{mode:['css','legacy'],avoid:['.summary','.words']}}).from(payslip).save(); document.getElementById('status').textContent='PDF downloaded successfully. Check your Downloads folder.'; } catch(error) { console.error(error); document.getElementById('status').textContent=error.message==='PDF library did not load'?'PDF service unavailable. Please connect to the internet and try again.':'PDF download failed. Please open the page from GitHub Pages and try again.'; } finally { payslip.classList.remove('pdf-mode'); button.disabled=false; } });
+    document.getElementById('generate').addEventListener('click',async()=>{ const button=document.getElementById('generate'); const payslip=document.getElementById('payslip'); button.disabled=true; payslip.classList.add('pdf-mode'); document.getElementById('status').textContent='Preparing PDF...'; try { if(typeof html2pdf!=='function') throw new Error('PDF library did not load'); await html2pdf().set({margin:8,filename:`payslip-${document.getElementById('employeeId').value||'employee'}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(payslip).save(); document.getElementById('status').textContent='PDF downloaded successfully. Check your Downloads folder.'; } catch(error) { console.error(error); document.getElementById('status').textContent=error.message==='PDF library did not load'?'PDF service unavailable. Please connect to the internet and try again.':'PDF download failed. Please open the page from GitHub Pages and try again.'; } finally { payslip.classList.remove('pdf-mode'); button.disabled=false; } });
     refreshTotals();
   </script>
 </body>
