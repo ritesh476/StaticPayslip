@@ -57,6 +57,9 @@
     @media (max-width:640px) { .page{padding:8px}.paper{padding:16px 12px 22px}.company{width:100%}.details-grid,.tables{grid-template-columns:1fr}.table-wrap+.table-wrap{border-left:0;border-top:1px solid #edf0f5}.summary{width:100%}.brand-copy{width:130px}.logo{width:90px} }
     @media print { body{background:#fff}.page{padding:0}.paper{border:0;box-shadow:none}.actions,.status,.row-add,.row-delete{display:none!important} input{border-bottom:0} }
     .pdf-mode .actions, .pdf-mode .status, .pdf-mode .row-add, .pdf-mode .row-delete { display:none!important; }
+    .pdf-mode .summary { display:flex; break-inside:avoid; page-break-inside:avoid; }
+    .pdf-mode .summary > div:first-child { flex:1; }
+    .pdf-mode .summary > div:last-child { display:flex; flex:0 0 95px; align-items:center; justify-content:flex-end; }
   </style>
 </head>
 <body>
